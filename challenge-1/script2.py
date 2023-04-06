@@ -1,6 +1,8 @@
+from datetime import datetime
+
 from scapy.contrib.coap import CoAP
 from scapy.layers.dns import DNS
-from scapy.layers.inet import IP
+from scapy.layers.inet import IP, UDP
 from scapy.utils import rdpcap
 
 count = 0
@@ -43,16 +45,22 @@ for i in range(0, len(packets)):
             # Get the packet
             response = packets[j]
 
+            diff = datetime.fromtimestamp(float(response.time)) - datetime.fromtimestamp(float(delete.time))
+            if (diff.total_seconds() > 6000): break
+
             # If the packet has CoAP and the code is 2.XX Content (65-95)
-            if (j not in usedIds and CoAP in response and (response[CoAP].code >= 65 or response[CoAP].code <= 95) and
+            if (j not in usedIds and CoAP in response and 65 <= response[
+                CoAP].code <= 95 and
                     # The packet is a response to the delete request
                     ((response[CoAP].token != b'' and response[CoAP].token == delete[CoAP].token) or response[
                         CoAP].msg_id == delete[CoAP].msg_id) and
                     # The destination IP of the response is the source IP of the delete request and the source IP of the
                     # response is the destination IP of the delete request
-                    IP in response and response[IP].dst == delete[IP].src and response[IP].src == delete[IP].dst):
+                    IP in response and response[IP].dst == delete[IP].src and response[IP].src == delete[IP].dst and
+                    response[UDP].dport == delete[UDP].sport and response[UDP].sport == delete[UDP].dport):
                 # Set the found flag to true
                 usedIds.add(j)
+                response[CoAP].show()
                 didFound = True
                 break
 
@@ -65,6 +73,5 @@ for i in range(0, len(packets)):
                 helloCount += 1
 
 # Print the results
-print("usedIds: ", usedIds)
 print("count: ", count)
 print("hello count: ", helloCount)

@@ -37,6 +37,7 @@ for i in range(0, len(packets)):
                     # If the packet arrive from the HiveMQ broker
                     IP in pubOrConn and pubOrConn[IP].src == conn[IP].dst and pubOrConn[IP].dst == conn[IP].src):
                 # Increment the counter
+                # pubOrConn[MQTT].show()
                 count += 1
 
             # If the packet has MQTT and the type is 1 (CONNECT)

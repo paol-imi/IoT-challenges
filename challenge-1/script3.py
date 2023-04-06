@@ -1,12 +1,14 @@
 from scapy.contrib.mqtt import MQTT
 from scapy.layers.dns import DNS
-from scapy.layers.inet import IP
+from scapy.layers.inet import IP, TCP
 from scapy.utils import rdpcap
 
 count = 0
 topicCount = 0
 ips = set([])
 packets = rdpcap('./file.pcapng')
+withSLWildcards = set([])
+withRoom0Topic = set([])
 
 # For each packet in the pcap file
 for i in range(0, len(packets)):
@@ -28,22 +30,26 @@ for i in range(0, len(packets)):
     # If the packet has MQTT and the type is 8 (SUBSCRIBE) and the destination is the mosquitto broker
     if MQTT in sub and sub[MQTT].type == 8 and sub[IP].dst in ips:
         hasSLWildcard = False
-        subscribedToArea0 = False
+        hasRoom0Topic = False
         for topic in sub[MQTT].topics:
             if b'+' in topic.topic:
                 hasSLWildcard = True
-                if topic.topic in [b"+/room2/area0", b"hospital/+/area0", b"hospital/room2/+"]:
-                    subscribedToArea0 = True
+            if topic.topic in [b"hospital/room2/area0", b"+/room2/area0", b"hospital/+/area0", b"hospital/room2/+",
+                               b"+/+/area0", b"+/room2/+", b"hospital/+/+", b"+/+/+", b"hospital/room2/#",
+                               b"hospital/#", b"#", ]:
+                hasRoom0Topic = True
 
         for j in range(i, len(packets)):
             suback = packets[j]
             if (MQTT in suback and suback[MQTT].type == 9 and sub[MQTT].msgid == suback[MQTT].msgid and
-                    IP in sub and IP in suback and sub[IP].src == suback[IP].dst and sub[IP].dst == suback[IP].src):
+                    IP in sub and IP in suback and sub[IP].src == suback[IP].dst and sub[IP].dst == suback[IP].src and
+                    sub[TCP].ack == suback[TCP].seq and sub[TCP].sport == suback[TCP].dport and sub[TCP].dport ==
+                    suback[TCP].sport):
                 if hasSLWildcard:
-                    count += 1
-                    if subscribedToArea0:
-                        topicCount += 1
+                    withSLWildcards.add((sub[IP].src, sub[TCP].sport))
+                if hasRoom0Topic:
+                    withRoom0Topic.add((sub[IP].src, sub[TCP].sport))
                 break
 
-print("count: ", count)
-print("topic count: ", topicCount)
+print("count: ", len(withSLWildcards))
+print("topic count: ", len(withRoom0Topic.intersection(withSLWildcards)))
