@@ -11,11 +11,11 @@ packets = rdpcap('./file.pcapng')
 for i in range(0, len(packets)):
     # Get the packet
     packet = packets[i]
-    # If the packet has DNS and the QR flag is set to 1, meaning it is a response
+    # If the packet has DNS and is a response (QR flag is set to 1)
     if DNS in packet and packet[DNS].qr == 1:
         # Loop through the answer section of the DNS response
         for i in range(packet[DNS].ancount):
-            # If the answer is an IP record for the HiveMQ broker
+            # If the answer is an IP record for the HiveMQ broker (broker.hivemq.com) and the type is 1 (A) or 28 (AAAA)
             if packet[DNS].an[i].rrname == b'broker.hivemq.com.' and packet[DNS].an[i].type in [1, 28]:
                 # Add the IP address of the HiveMQ broker to the set
                 ips.add(packet[DNS].an[i].rdata)
