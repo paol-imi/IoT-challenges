@@ -7,24 +7,6 @@ count = 0
 ips = set([])
 packets = rdpcap('./file.pcapng')
 
-
-# Get the topics from a MQTT PUBLISH packet
-def get_topics_qos_from_publish_msg(packet):
-    topics = []
-    k = 0
-    # TODO: Find a better way. I didn't find any API to loop trough the topics in a reasonable amount of time.
-    #   With some trial and error, I found out that I can access the packets using numerical indexes so I'll do that.
-    while True:
-        try:
-            # We just access the message with [k], if it is not present it will just trow and end the loop
-            topics.append(packet[MQTT][k].QOS)
-            # We increment by 2 because the topics are repeated each time
-            k += 2
-        except:
-            break
-    return topics
-
-
 # For each packet in the pcap file
 for i in range(0, len(packets)):
     # Get the packet
@@ -47,30 +29,41 @@ for i in range(0, len(packets)):
             # If the packet is directed to the HiveMQ broker
             IP in conn and conn[IP].dst in ips):
 
+        isConnected = False
+        # For each packet after the current packet
+        for j in range(i + 1, len(packets)):
+            connack = packets[j]
+            # If the packet has MQTT and the type is 1 (CONNECT) and the protocol level is 5
+            if (MQTT in connack and connack[MQTT].type == 2 and
+                    # If the packet is directed to the HiveMQ broker
+                    IP in connack and connack[IP].dst == conn[IP].src and connack[IP].src == conn[IP].dst and
+                    # If the ports are the same
+                    conn[TCP].sport == connack[TCP].dport and conn[TCP].dport == connack[TCP].sport):
+                # Increment the count
+                isConnected = True
+                break
+
+        if not isConnected:
+            continue
+
         # For each packet after the current packet
         for j in range(i + 1, len(packets)):
             # Get the packet
             pubOrConn = packets[j]
-            # If the packet has MQTT and the type is 3 (PUBLISH)
-            if (MQTT in pubOrConn and pubOrConn[MQTT].type == 3 and
+            # If the packet has MQTT and the type is 4 (PUBACK)
+            if (MQTT in pubOrConn and pubOrConn[MQTT].type == 4 and
                     # If the packet arrive from the HiveMQ broker
                     IP in pubOrConn and pubOrConn[IP].dst == conn[IP].src and pubOrConn[IP].src == conn[IP].dst and
                     # If the ports are the same
                     conn[TCP].sport == pubOrConn[TCP].dport and conn[TCP].dport == pubOrConn[TCP].sport):
-
-                # Get the qoss of the topics
-                qoss = get_topics_qos_from_publish_msg(pubOrConn)
-                for qos in qoss:
-                    # If the qos is 1
-                    if qos == 1:
-                        # Increment the counter
-                        count += 1
+                count += 1
 
             # If the packet has MQTT and the type is 1 (CONNECT)
             if (MQTT in pubOrConn and pubOrConn[MQTT].type == 1 and
                     # If the packet arrive from the HiveMQ broker
-                    conn[IP].src == pubOrConn[IP].src and pubOrConn[IP].dst == conn[IP].dst and conn[TCP].sport ==
-                    pubOrConn[TCP].dport):
+                    IP in pubOrConn and pubOrConn[IP].dst == conn[IP].src and pubOrConn[IP].src == conn[IP].dst and
+                    # If the ports are the same
+                    conn[TCP].sport == pubOrConn[TCP].dport and conn[TCP].dport == pubOrConn[TCP].sport):
                 # break the loop
                 break
 
