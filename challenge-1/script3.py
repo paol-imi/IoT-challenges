@@ -42,9 +42,7 @@ for i in range(0, len(packets)):
         for j in range(i, len(packets)):
             suback = packets[j]
             if (MQTT in suback and suback[MQTT].type == 9 and sub[MQTT].msgid == suback[MQTT].msgid and
-                    IP in sub and IP in suback and sub[IP].src == suback[IP].dst and sub[IP].dst == suback[IP].src and
-                    sub[TCP].ack == suback[TCP].seq and sub[TCP].sport == suback[TCP].dport and sub[TCP].dport ==
-                    suback[TCP].sport):
+                    IP in sub and IP in suback and sub[IP].src == suback[IP].dst and sub[IP].dst == suback[IP].src):
                 if hasSLWildcard:
                     withSLWildcards.add((sub[IP].src, sub[TCP].sport))
                 if hasRoom0Topic:

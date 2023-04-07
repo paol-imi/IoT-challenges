@@ -8,8 +8,9 @@ packets = rdpcap('./file.pcapng')
 
 
 def startsWithUniversity(topic):
-    print(topic)
-    return topic == b"university" or (topic is not None and "university/" in topic.decode("utf-8"))
+    return topic == b"university" or (topic is not None and (
+            topic.decode("utf-8").startswith("university/") or topic.decode("utf-8").startswith(
+        "+") or topic.decode("utf-8").startswith("#")))
 
 
 # For each packet in the pcap file
@@ -19,9 +20,11 @@ for i in range(0, len(packets)):
     # If the packet has MQTT and the type is 1 (CONNECT)
     if MQTT in conn and conn[MQTT].type == 1 and startsWithUniversity(conn[MQTT].willtopic):
         # For each packet after the current packet
+        print("conn: ", conn[MQTT].willtopic)
         for j in range(i + 1, len(packets)):
             # Get the packet
             pub = packets[j]
+            if (MQTT in pub and pub[MQTT].type == 3): pub.show()
             # If the packet has MQTT and the type is 3 (PUBLISH)
             if (MQTT in pub and pub[MQTT].type == 3 and pub[MQTT].topic == conn[MQTT].willtopic and
                     pub[MQTT].value == conn[MQTT].willmsg and

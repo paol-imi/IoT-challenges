@@ -28,32 +28,33 @@ for i in range(0, len(packets)):
     if (MQTT in conn and conn[MQTT].type == 1 and conn[MQTT].protolevel == 5 and
             # If the packet is directed to the HiveMQ broker
             IP in conn and conn[IP].dst in ips):
+
         # For each packet after the current packet
-        for j in range(i + 1, len(packets)):
+        for j in range(0, len(packets)):
             # Get the packet
             pubOrConn = packets[j]
             # If the packet has MQTT and the type is 3 (PUBLISH)
             if (MQTT in pubOrConn and pubOrConn[MQTT].type == 3 and pubOrConn[MQTT].QOS == 1 and
                     # If the packet arrive from the HiveMQ broker
-                    IP in pubOrConn and pubOrConn[IP].src == conn[IP].dst and pubOrConn[IP].dst == conn[IP].src and
+                    IP in pubOrConn and pubOrConn[IP].dst == conn[IP].src and
                     conn[TCP].sport == pubOrConn[TCP].dport):
                 # Increment the counter
 
-                i = 0
-                pubOrConn[MQTT].show()
+                k = 0
+                # pubOrConn[MQTT].show()
                 while True:
                     try:
-                        print(pubOrConn[MQTT][i].topic)
-                        pubOrConn[MQTT][i]
-                        i += 1
+                        print(pubOrConn[MQTT][k].topic)
+                        pubOrConn[MQTT][k]
+                        k += 1
                     except:
                         break
 
-                count += i - 1
+                count += k / 2
                 print(i)
 
             # If the packet has MQTT and the type is 1 (CONNECT)
-            if (MQTT in pubOrConn and pubOrConn[MQTT].type == 1 and
+            if (False and MQTT in pubOrConn and pubOrConn[MQTT].type == 1 and
                     # If the packet arrive from the HiveMQ broker
                     conn[IP].src == pubOrConn[IP].src and pubOrConn[IP].dst == conn[IP].dst and conn[TCP].sport ==
                     pubOrConn[TCP].dport):

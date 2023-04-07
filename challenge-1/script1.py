@@ -1,6 +1,6 @@
-from scapy.utils import rdpcap
-from scapy.layers.inet import IP
 from scapy.contrib.coap import CoAP
+from scapy.layers.inet import IP
+from scapy.utils import rdpcap
 
 count = 0
 countNON = 0
@@ -13,7 +13,7 @@ for i in range(0, len(packets)):
     # Check if the packet is a CoAP packet and if it is a 404 response coming from the server
     if CoAP in notFound and notFound[CoAP].code == 132 and notFound[IP].src == '127.0.0.1':
         # For each packet before the current one
-        for j in range(i-1, 0, -1):
+        for j in range(i - 1, 0, -1):
             # Get the packet
             get = packets[j]
 

@@ -1,5 +1,3 @@
-from datetime import datetime
-
 from scapy.contrib.coap import CoAP
 from scapy.layers.dns import DNS
 from scapy.layers.inet import IP, UDP
@@ -45,12 +43,9 @@ for i in range(0, len(packets)):
             # Get the packet
             response = packets[j]
 
-            diff = datetime.fromtimestamp(float(response.time)) - datetime.fromtimestamp(float(delete.time))
-            if (diff.total_seconds() > 6000): break
-
             # If the packet has CoAP and the code is 2.XX Content (65-95)
-            if (j not in usedIds and CoAP in response and 65 <= response[
-                CoAP].code <= 95 and
+            if (j not in usedIds and CoAP in response and 66 <= response[
+                CoAP].code <= 66 and
                     # The packet is a response to the delete request
                     ((response[CoAP].token != b'' and response[CoAP].token == delete[CoAP].token) or response[
                         CoAP].msg_id == delete[CoAP].msg_id) and
