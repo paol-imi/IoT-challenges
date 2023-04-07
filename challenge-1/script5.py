@@ -48,14 +48,15 @@ for i in range(0, len(packets)):
             IP in conn and conn[IP].dst in ips):
 
         # For each packet after the current packet
-        for j in range(0, len(packets)):
+        for j in range(i + 1, len(packets)):
             # Get the packet
             pubOrConn = packets[j]
             # If the packet has MQTT and the type is 3 (PUBLISH)
             if (MQTT in pubOrConn and pubOrConn[MQTT].type == 3 and
                     # If the packet arrive from the HiveMQ broker
-                    IP in pubOrConn and pubOrConn[IP].dst == conn[IP].src and
-                    conn[TCP].sport == pubOrConn[TCP].dport):
+                    IP in pubOrConn and pubOrConn[IP].dst == conn[IP].src and pubOrConn[IP].src == conn[IP].dst and
+                    # If the ports are the same
+                    conn[TCP].sport == pubOrConn[TCP].dport and conn[TCP].dport == pubOrConn[TCP].sport):
 
                 # Get the qoss of the topics
                 qoss = get_topics_qos_from_publish_msg(pubOrConn)
