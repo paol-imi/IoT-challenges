@@ -6,10 +6,9 @@ from scapy.utils import rdpcap
 count = 0
 helloCount = 0
 ips = set([])
-usedIds = set([])
 packets = rdpcap('./file.pcapng')
 
-# For each packet in the pcap file
+# We retrieve the IP addresses of the coap.me server
 for i in range(0, len(packets)):
     # Get the packet
     packet = packets[i]
@@ -19,7 +18,7 @@ for i in range(0, len(packets)):
         for j in range(packet[DNS].ancount):
             # If the answer is an IP record for the coap.me server and the type is A or AAAA
             if packet[DNS].an[j].rrname == b'coap.me.' and packet[DNS].an[j].type in [1, 28]:
-                # Add the IP address of the HiveMQ broker to the set
+                # Add the IP address of the coap.me server to the set
                 ips.add(packet[DNS].an[j].rdata)
 
 # For each packet in the pcap file
@@ -43,24 +42,22 @@ for i in range(0, len(packets)):
             # Get the packet
             response = packets[j]
 
-            # If the packet has CoAP and the code is 2.XX Content (65-95)
-            if (j not in usedIds and CoAP in response and 66 <= response[
-                CoAP].code <= 66 and
+            # If the packet has CoAP and the code is 2.02
+            if (CoAP in response and response[CoAP].code == 66 and
                     # The packet is a response to the delete request
-                    ((response[CoAP].token != b'' and response[CoAP].token == delete[CoAP].token) or response[
-                        CoAP].msg_id == delete[CoAP].msg_id) and
-                    # The destination IP of the response is the source IP of the delete request and the source IP of the
-                    # response is the destination IP of the delete request
-                    IP in response and response[IP].dst == delete[IP].src and response[IP].src == delete[IP].dst and
+                    (response[CoAP].msg_id == delete[CoAP].msg_id or (
+                            response[CoAP].token != b'' and response[CoAP].token == delete[CoAP].token)) and
+                    # Check if the source and destination IP addresses are the same
+                    response[IP].dst == delete[IP].src and response[IP].src == delete[IP].dst and
+                    # Check if the source and destination ports are the same
                     response[UDP].dport == delete[UDP].sport and response[UDP].sport == delete[UDP].dport):
                 # Set the found flag to true
-                usedIds.add(j)
-                response[CoAP].show()
                 didFound = True
                 break
 
-        # If no 2.XX response was found
+        # If no 2.02 response was found
         if not didFound:
+            # Increment the count
             count += 1
             # If the path is 'hello'
             if isHelloPath:
