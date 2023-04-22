@@ -55,7 +55,7 @@ for i in range(0, len(packets)):
                     # If the packet arrive from the HiveMQ broker
                     IP in pubOrConn and pubOrConn[IP].dst == conn[IP].src and pubOrConn[IP].src == conn[IP].dst and
                     # If the ports are the same
-                    conn[TCP].sport == pubOrConn[TCP].dport and conn[TCP].dport == pubOrConn[TCP].sport):
+                    conn[TCP].sport == pubOrConn[TCP].dport):
                 count += 1
 
             # If the packet has MQTT and the type is 1 (CONNECT)
