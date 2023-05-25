@@ -1,6 +1,6 @@
 [
     {
-        "id": "433ab2c2f01c8931",
+        "id": "306fd6c9f9703347",
         "type": "tab",
         "label": "Flow 1",
         "disabled": false,
@@ -8,9 +8,9 @@
         "env": []
     },
     {
-        "id": "803f6ea3e9e33895",
+        "id": "f2f1d262a0365ca2",
         "type": "function",
-        "z": "433ab2c2f01c8931",
+        "z": "306fd6c9f9703347",
         "name": "Fetch frame",
         "func": "const personCodeLastFourDigits = 7668;\nconst numberOfMessages = 7711;\nconst { id } = msg.payload;\n\nconst file = global.get(\"file\");\nif (!Array.isArray(file)) \n    throw \"File not present in global context. Please manually load it using the 'load' node.\";\nif (file.length !== numberOfMessages)\n    throw `The file contains ${file.length} lines, expected ${numberOfMessages}.`\n\nconst frameNumber = (personCodeLastFourDigits + Number(id)) % numberOfMessages;\nconst { Info, Message } = file.find((frame) => frame[\"No.\"] === frameNumber);\n\nreturn { payload: { id, Info, Message }};",
         "outputs": 1,
@@ -19,17 +19,17 @@
         "finalize": "",
         "libs": [],
         "x": 1130,
-        "y": 300,
+        "y": 360,
         "wires": [
             [
-                "c9ad0216f6a7314e"
+                "b522734f5b0e35d4"
             ]
         ]
     },
     {
-        "id": "51f845c30996a925",
+        "id": "6759f30f9b2bd678",
         "type": "mqtt in",
-        "z": "433ab2c2f01c8931",
+        "z": "306fd6c9f9703347",
         "name": "",
         "topic": "polimi/challenge_2/2023/id_code_generator",
         "qos": "2",
@@ -40,17 +40,17 @@
         "rh": 0,
         "inputs": 0,
         "x": 190,
-        "y": 300,
+        "y": 360,
         "wires": [
             [
-                "e8e1dd82af3c7da7"
+                "2b712f0d0fd418d5"
             ]
         ]
     },
     {
-        "id": "95a1c735b4c50612",
+        "id": "71e8bc90a0b925ce",
         "type": "function",
-        "z": "433ab2c2f01c8931",
+        "z": "306fd6c9f9703347",
         "name": "Parse MQTT Publish packet",
         "func": "const { id, Info, Message } = msg.payload;\n\nconst topics = Info.split(',')\n    .map(s => s.substring(s.indexOf('[') + 1, s.indexOf(']')));\n// If Message is undefined (the csv has no value) we generate \n// the message array [null]\nconst messages = Message ? JSON.parse(`[${Message}]`) : new Array(topics.length).fill(undefined);\n\nif(messages.length !== topics.length)\n    throw `\n    The number of messages is different from the number of topics.\n    messages: ${messages}\n    topics: ${topics}\n    `\n    \nreturn { payload: { id, topics, messages }};",
         "outputs": 1,
@@ -59,17 +59,17 @@
         "finalize": "",
         "libs": [],
         "x": 1400,
-        "y": 300,
+        "y": 360,
         "wires": [
             [
-                "7d2a91d1a854bc4e"
+                "32ceb8d8e498e279"
             ]
         ]
     },
     {
-        "id": "c9ad0216f6a7314e",
+        "id": "b522734f5b0e35d4",
         "type": "switch",
-        "z": "433ab2c2f01c8931",
+        "z": "306fd6c9f9703347",
         "name": "Forward if Publish",
         "property": "payload.Info",
         "propertyType": "msg",
@@ -84,17 +84,17 @@
         "repair": false,
         "outputs": 1,
         "x": 1110,
-        "y": 360,
+        "y": 420,
         "wires": [
             [
-                "95a1c735b4c50612"
+                "71e8bc90a0b925ce"
             ]
         ]
     },
     {
-        "id": "60a4471cdaaf5a64",
+        "id": "b835d425bd788912",
         "type": "function",
-        "z": "433ab2c2f01c8931",
+        "z": "306fd6c9f9703347",
         "name": "Pass first 100 packets",
         "func": "var counter = global.get('counter') || 0;\n\nif (counter < 100) {\n    // Increment counter\n    counter++;\n    global.set('counter', counter);\n    node.warn(counter);\n    if (counter === 100) {\n        node.warn('Input generation stopped.');\n    }\n\n    return msg;\n}",
         "outputs": 1,
@@ -103,17 +103,18 @@
         "finalize": "",
         "libs": [],
         "x": 840,
-        "y": 300,
+        "y": 360,
         "wires": [
             [
-                "803f6ea3e9e33895"
+                "f2f1d262a0365ca2",
+                "4731c2ae93d2d77d"
             ]
         ]
     },
     {
-        "id": "33e5d87b83c7353d",
+        "id": "b49fd7e96bba8e38",
         "type": "mqtt out",
-        "z": "433ab2c2f01c8931",
+        "z": "306fd6c9f9703347",
         "name": "",
         "topic": "polimi/iot2023/challenge2/10677668",
         "qos": "2",
@@ -125,13 +126,13 @@
         "expiry": "",
         "broker": "269f9f80bd3e6cbb",
         "x": 1750,
-        "y": 300,
+        "y": 360,
         "wires": []
     },
     {
-        "id": "7d2a91d1a854bc4e",
+        "id": "32ceb8d8e498e279",
         "type": "function",
-        "z": "433ab2c2f01c8931",
+        "z": "306fd6c9f9703347",
         "name": "Extract publish messages",
         "func": "const { id, messages } = msg.payload;\n\nconst options = { timeZone: 'Europe/Rome', hour12: false };\nconst datetime = new Date().toLocaleString('it-IT', options);\n\nconst msgs = messages.map((message) => ({ \n    payload: {\n        timestamp: datetime, \n        id, \n        payload: message\n    }\n}))\n\nreturn [msgs];",
         "outputs": 1,
@@ -140,17 +141,18 @@
         "finalize": "",
         "libs": [],
         "x": 1410,
-        "y": 360,
+        "y": 420,
         "wires": [
             [
-                "33e5d87b83c7353d"
+                "b49fd7e96bba8e38",
+                "48adef1cf24eed6d"
             ]
         ]
     },
     {
-        "id": "910dc28af96cc688",
+        "id": "c98328610b9c2a93",
         "type": "mqtt in",
-        "z": "433ab2c2f01c8931",
+        "z": "306fd6c9f9703347",
         "name": "",
         "topic": "polimi/iot2023/challenge2/10677668",
         "qos": "2",
@@ -160,18 +162,19 @@
         "rap": true,
         "rh": 0,
         "inputs": 0,
-        "x": 140,
-        "y": 680,
+        "x": 160,
+        "y": 660,
         "wires": [
             [
-                "c0299cec82dee385"
+                "8093e8250684f3aa",
+                "8d7c65ff0ab1a250"
             ]
         ]
     },
     {
-        "id": "22fb63439f783e43",
+        "id": "15fd949dd862b6a6",
         "type": "switch",
-        "z": "433ab2c2f01c8931",
+        "z": "306fd6c9f9703347",
         "name": "Forward if celsius",
         "property": "payload.payload.unit",
         "propertyType": "msg",
@@ -185,19 +188,36 @@
         "checkall": "true",
         "repair": false,
         "outputs": 1,
-        "x": 930,
-        "y": 700,
+        "x": 950,
+        "y": 680,
         "wires": [
             [
-                "f9541e12f680108a",
-                "9a972bc636f5439c"
+                "9ffe4c617c27014f",
+                "177a266a55419a86"
             ]
         ]
     },
     {
-        "id": "96d29da0f8a2b159",
+        "id": "8d7c65ff0ab1a250",
+        "type": "debug",
+        "z": "306fd6c9f9703347",
+        "name": "Forwarded",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 430,
+        "y": 760,
+        "wires": []
+    },
+    {
+        "id": "3389d06d795d5b55",
         "type": "ui_chart",
-        "z": "433ab2c2f01c8931",
+        "z": "306fd6c9f9703347",
         "name": "",
         "group": "3d123e26d3ef4f8d",
         "order": 0,
@@ -231,16 +251,17 @@
         ],
         "outputs": 1,
         "useDifferentColor": false,
-        "x": 1410,
-        "y": 740,
+        "className": "",
+        "x": 1430,
+        "y": 720,
         "wires": [
             []
         ]
     },
     {
-        "id": "f9541e12f680108a",
+        "id": "9ffe4c617c27014f",
         "type": "function",
-        "z": "433ab2c2f01c8931",
+        "z": "306fd6c9f9703347",
         "name": "Filter max range",
         "func": "const { range } = msg.payload.payload\nconst maxRange = range[1];\n\nreturn { payload: maxRange };",
         "outputs": 1,
@@ -248,18 +269,18 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 1180,
-        "y": 740,
+        "x": 1200,
+        "y": 720,
         "wires": [
             [
-                "96d29da0f8a2b159"
+                "3389d06d795d5b55"
             ]
         ]
     },
     {
-        "id": "403dfeb226798cf1",
+        "id": "263944ef760b3c1b",
         "type": "file",
-        "z": "433ab2c2f01c8931",
+        "z": "306fd6c9f9703347",
         "name": "",
         "filename": "./output.csv",
         "filenameType": "str",
@@ -267,16 +288,16 @@
         "createDir": true,
         "overwriteFile": "false",
         "encoding": "none",
-        "x": 1430,
-        "y": 660,
+        "x": 1450,
+        "y": 640,
         "wires": [
             []
         ]
     },
     {
-        "id": "9a972bc636f5439c",
+        "id": "177a266a55419a86",
         "type": "function",
-        "z": "433ab2c2f01c8931",
+        "z": "306fd6c9f9703347",
         "name": "Filter payload string",
         "func": "const { payload } = msg.payload\n\nreturn { payload: JSON.stringify(payload) };",
         "outputs": 1,
@@ -284,18 +305,19 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 1190,
-        "y": 660,
+        "x": 1210,
+        "y": 640,
         "wires": [
             [
-                "403dfeb226798cf1"
+                "263944ef760b3c1b",
+                "c71b52850a31529c"
             ]
         ]
     },
     {
-        "id": "6fdc7e0579ccaa59",
+        "id": "16e78c5098dc0032",
         "type": "inject",
-        "z": "433ab2c2f01c8931",
+        "z": "306fd6c9f9703347",
         "name": "Manual start",
         "props": [
             {
@@ -313,16 +335,16 @@
         "y": 80,
         "wires": [
             [
-                "f118c13caf25db73",
-                "4d23d3f082d5b910",
-                "85dc32204e3652dc"
+                "86782c79bfb2ca0a",
+                "a01335e6763df220",
+                "25b970b67111930f"
             ]
         ]
     },
     {
-        "id": "f118c13caf25db73",
+        "id": "86782c79bfb2ca0a",
         "type": "mqtt out",
-        "z": "433ab2c2f01c8931",
+        "z": "306fd6c9f9703347",
         "name": "",
         "topic": "polimi/iot2023/challenge2/10677668",
         "qos": "2",
@@ -338,9 +360,9 @@
         "wires": []
     },
     {
-        "id": "8cb6a95c393611de",
+        "id": "40576ac301942429",
         "type": "switch",
-        "z": "433ab2c2f01c8931",
+        "z": "306fd6c9f9703347",
         "name": "Forward if global.active",
         "property": "active",
         "propertyType": "global",
@@ -352,18 +374,18 @@
         "checkall": "true",
         "repair": false,
         "outputs": 1,
-        "x": 650,
-        "y": 700,
+        "x": 670,
+        "y": 680,
         "wires": [
             [
-                "22fb63439f783e43"
+                "15fd949dd862b6a6"
             ]
         ]
     },
     {
-        "id": "ff5dd9dc8bb2eb31",
+        "id": "67c653d3521130d2",
         "type": "change",
-        "z": "433ab2c2f01c8931",
+        "z": "306fd6c9f9703347",
         "name": "set global.active = true",
         "rules": [
             {
@@ -382,13 +404,15 @@
         "x": 580,
         "y": 120,
         "wires": [
-            []
+            [
+                "48201d78150eda7d"
+            ]
         ]
     },
     {
-        "id": "c0299cec82dee385",
+        "id": "8093e8250684f3aa",
         "type": "switch",
-        "z": "433ab2c2f01c8931",
+        "z": "306fd6c9f9703347",
         "name": "",
         "property": "payload",
         "propertyType": "msg",
@@ -407,21 +431,21 @@
         "checkall": "false",
         "repair": false,
         "outputs": 2,
-        "x": 410,
-        "y": 680,
+        "x": 430,
+        "y": 660,
         "wires": [
             [
-                "d905b1b07b43df0d"
+                "6b3a9bd380031913"
             ],
             [
-                "8cb6a95c393611de"
+                "40576ac301942429"
             ]
         ]
     },
     {
-        "id": "85dc32204e3652dc",
+        "id": "25b970b67111930f",
         "type": "change",
-        "z": "433ab2c2f01c8931",
+        "z": "306fd6c9f9703347",
         "name": "set global.counter = 0",
         "rules": [
             {
@@ -441,14 +465,14 @@
         "y": 120,
         "wires": [
             [
-                "ff5dd9dc8bb2eb31"
+                "67c653d3521130d2"
             ]
         ]
     },
     {
-        "id": "d905b1b07b43df0d",
+        "id": "6b3a9bd380031913",
         "type": "change",
-        "z": "433ab2c2f01c8931",
+        "z": "306fd6c9f9703347",
         "name": "set global.active = false",
         "rules": [
             {
@@ -464,16 +488,16 @@
         "from": "",
         "to": "",
         "reg": false,
-        "x": 650,
-        "y": 660,
+        "x": 670,
+        "y": 640,
         "wires": [
             []
         ]
     },
     {
-        "id": "39d6bf76df05c833",
+        "id": "d83fc8af2c4134e2",
         "type": "inject",
-        "z": "433ab2c2f01c8931",
+        "z": "306fd6c9f9703347",
         "name": "Manual Stop",
         "props": [
             {
@@ -491,14 +515,67 @@
         "y": 180,
         "wires": [
             [
-                "853f720ea3747f26"
+                "339a64e2a1a4ecd0",
+                "7f5ab73259012531"
             ]
         ]
     },
     {
-        "id": "4d23d3f082d5b910",
+        "id": "339a64e2a1a4ecd0",
+        "type": "change",
+        "z": "306fd6c9f9703347",
+        "name": "set global.counter = 100",
+        "rules": [
+            {
+                "t": "set",
+                "p": "counter",
+                "pt": "global",
+                "to": "100",
+                "tot": "num"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 370,
+        "y": 180,
+        "wires": [
+            [
+                "6633ff78edd89579"
+            ]
+        ]
+    },
+    {
+        "id": "6633ff78edd89579",
+        "type": "change",
+        "z": "306fd6c9f9703347",
+        "name": "set global.active = false",
+        "rules": [
+            {
+                "t": "set",
+                "p": "active",
+                "pt": "global",
+                "to": "false",
+                "tot": "bool"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 610,
+        "y": 180,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "a01335e6763df220",
         "type": "file in",
-        "z": "433ab2c2f01c8931",
+        "z": "306fd6c9f9703347",
         "name": "challenge2023_2.csv",
         "filename": "./challenge2023_2.csv",
         "filenameType": "str",
@@ -511,14 +588,14 @@
         "y": 80,
         "wires": [
             [
-                "7e16f621c7275138"
+                "3a8bca6ab0d133d2"
             ]
         ]
     },
     {
-        "id": "7e16f621c7275138",
+        "id": "3a8bca6ab0d133d2",
         "type": "csv",
-        "z": "433ab2c2f01c8931",
+        "z": "306fd6c9f9703347",
         "name": "",
         "sep": ",",
         "hdrin": true,
@@ -534,14 +611,14 @@
         "y": 80,
         "wires": [
             [
-                "14d5c97a1196b71c"
+                "ab9f95b8847ddcaf"
             ]
         ]
     },
     {
-        "id": "14d5c97a1196b71c",
+        "id": "ab9f95b8847ddcaf",
         "type": "change",
-        "z": "433ab2c2f01c8931",
+        "z": "306fd6c9f9703347",
         "name": "",
         "rules": [
             {
@@ -564,9 +641,60 @@
         ]
     },
     {
-        "id": "853f720ea3747f26",
+        "id": "c71b52850a31529c",
+        "type": "debug",
+        "z": "306fd6c9f9703347",
+        "name": "Saved",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1430,
+        "y": 560,
+        "wires": []
+    },
+    {
+        "id": "48adef1cf24eed6d",
+        "type": "debug",
+        "z": "306fd6c9f9703347",
+        "name": "Send",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1650,
+        "y": 420,
+        "wires": []
+    },
+    {
+        "id": "4731c2ae93d2d77d",
+        "type": "debug",
+        "z": "306fd6c9f9703347",
+        "name": "ID",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload.id",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 890,
+        "y": 420,
+        "wires": []
+    },
+    {
+        "id": "7f5ab73259012531",
         "type": "mqtt out",
-        "z": "433ab2c2f01c8931",
+        "z": "306fd6c9f9703347",
         "name": "",
         "topic": "polimi/iot2023/challenge2/10677668",
         "qos": "2",
@@ -578,13 +706,13 @@
         "expiry": "",
         "broker": "269f9f80bd3e6cbb",
         "x": 410,
-        "y": 180,
+        "y": 220,
         "wires": []
     },
     {
-        "id": "e8e1dd82af3c7da7",
+        "id": "2b712f0d0fd418d5",
         "type": "function",
-        "z": "433ab2c2f01c8931",
+        "z": "306fd6c9f9703347",
         "name": "Forward if well formatted",
         "func": "if (typeof msg.payload === \"object\" &&\n    Object.keys(msg.payload).length == 2 && \n    typeof msg.payload.id === \"string\" &&\n    typeof msg.payload.timestamp === \"string\") return msg",
         "outputs": 1,
@@ -593,11 +721,28 @@
         "finalize": "",
         "libs": [],
         "x": 550,
-        "y": 300,
+        "y": 360,
         "wires": [
             [
-                "60a4471cdaaf5a64"
+                "b835d425bd788912"
             ]
+        ]
+    },
+    {
+        "id": "48201d78150eda7d",
+        "type": "file",
+        "z": "306fd6c9f9703347",
+        "name": "",
+        "filename": "./output.csv",
+        "filenameType": "str",
+        "appendNewline": true,
+        "createDir": false,
+        "overwriteFile": "delete",
+        "encoding": "none",
+        "x": 790,
+        "y": 120,
+        "wires": [
+            []
         ]
     },
     {
@@ -635,7 +780,8 @@
         "order": 1,
         "disp": true,
         "width": "6",
-        "collapse": false
+        "collapse": false,
+        "className": ""
     },
     {
         "id": "6eaa4f666b452924",
