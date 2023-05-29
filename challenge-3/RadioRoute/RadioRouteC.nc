@@ -50,7 +50,7 @@ implementation {
   route_table_entry_t* lookup (uint16_t address);
   radio_route_msg_t* try_route_request_msg(uint16_t node_requested);
   radio_route_msg_t* try_route_reply_msg(uint16_t node_requested, uint16_t cost);
-  radio_route_msg_t* try_data_msg(uint16_t destination, uint16_t value);
+  radio_route_msg_t* try_data_msg(uint16_t sender, uint16_t destination, uint16_t value);
 
   // Event handler for the boot event.
   event void Boot.booted() {
@@ -95,7 +95,7 @@ implementation {
         radio_route_msg_t* rrm = try_route_request_msg(7);
         if(rrm != NULL) generate_send(AM_BROADCAST_ADDR, &packet, ROUTE_REQ_MSG);
       } else {
-        radio_route_msg_t* rrm = try_data_msg(7, 5);
+        radio_route_msg_t* rrm = try_data_msg(TOS_NODE_ID ,7, 5);
         if(rrm != NULL) generate_send(7, &packet, DATA_MSG);
       }
     }
@@ -234,7 +234,7 @@ implementation {
               dbgerror("radio_rec", "Packet is not for me and I don't know how to route it :(.\n");
             } else {
               // If I know how to route the packet, I send it.
-              radio_route_msg_t* msg = try_data_msg(rrm->destination, rrm->value);
+              radio_route_msg_t* msg = try_data_msg(rrm->sender, rrm->destination, rrm->value);
               if(msg != NULL) generate_send(entry->next_hop, &packet, DATA_MSG);
             }
           }
@@ -281,7 +281,7 @@ implementation {
             // If the sender is node 7 and the requested node is 1, send a data message.
             // Since we check next_hop == 0, we don't send a data message only the first time.
             if(TOS_NODE_ID == 1 && rrm->node_requested == 7 && entry->next_hop == 0) {
-              msg = try_data_msg(7, 5);
+              msg = try_data_msg(TOS_NODE_ID, 7, 5);
               generate_send(rrm->sender, &packet, DATA_MSG);
             }
 
@@ -355,7 +355,7 @@ implementation {
   }
 
   // Generate a data message.
-  radio_route_msg_t* try_data_msg(uint16_t destination, uint16_t value) {
+  radio_route_msg_t* try_data_msg(uint16_t sender, uint16_t destination, uint16_t value) {
   	radio_route_msg_t* msg;
     dbg("radio_send", "TRY SEND: {%d} ---(DATA_MSG: value %d for node {%d})---> {%d}\n", TOS_NODE_ID, value, destination, lookup(destination)->next_hop);
 
@@ -365,7 +365,7 @@ implementation {
     if (msg == NULL) return NULL;
     
     msg->type = DATA_MSG;
-    msg->sender = TOS_NODE_ID;
+    msg->sender = sender;
     msg->destination = destination;
     msg->value = value;
 
