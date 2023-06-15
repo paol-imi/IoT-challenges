@@ -1,0 +1,10 @@
+{
+  "dependencies": {
+    "node-red": "^3.0.2"
+  },
+  "name": "iot-project",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "node-red"
+  }
+}
