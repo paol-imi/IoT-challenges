@@ -95,7 +95,7 @@
                 "p": "payload"
             }
         ],
-        "repeat": "100",
+        "repeat": "15",
         "crontab": "",
         "once": true,
         "onceDelay": "1",
